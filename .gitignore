@@ -1,0 +1,5 @@
+# python file compile cache
+/.idea/
+/__pycache__/
+
+
