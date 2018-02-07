@@ -29,9 +29,17 @@ with open('Postures.csv', 'r') as f:
 
     # print(len(losspatternDic.keys()))
 
+sortedfilename = []
 for eachkey in losspatternDic:
     print(eachkey, len(losspatternDic[eachkey]))
     filename = eachkey + '.csv'
+    sortedfilename.append(filename)
     with open(filename, 'w') as wf:
         for eachline in losspatternDic[eachkey]:
             wf.write(eachline)
+
+sortedfilename.sort()
+with open('lossPatterns.txt', 'w') as wl:
+    for eachfilename in sortedfilename:
+        wl.write(eachfilename + '\n')
+
