@@ -27,7 +27,7 @@ with open('Postures.csv', 'r') as f:
 
         realline = datas[0] +',' + datas[1] + ',' + realline
 
-        realline.rstrip(',')
+        realline = realline.rstrip(',')
         realline += '\n'
 
         # if len(losspattern) != 36:
@@ -52,7 +52,7 @@ for eachkey in losspatternDic:
         if eachkey[i] == '1':
             featureExist += (featurename[i+2] + ',')
 
-    featureExist.rstrip(',')
+    featureExist = featureExist.rstrip(',')
     featureExist += '\n'
 
     with open(filename, 'w') as wf:
