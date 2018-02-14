@@ -104,3 +104,68 @@ sess = tf.Session()
 ######################################
 ###LOW LEVEL API###
 ######################################
+# def func():
+#     with tf.variable_scope(scope, reuse=True):
+#         sw1 = tf.get_variable('sW1')
+#     print(sess.run(sw1))
+#
+# with tf.variable_scope('myshare') as scope:
+#     # shareW1 = tf.Variable(tf.truncated_normal([10, 10], stddev=0.1), name='sW1')
+#     shareW1 = tf.get_variable('sW1', initializer=tf.truncated_normal([10, 10], stddev=0.1))
+#
+# sess.run(tf.global_variables_initializer())
+# print(sess.run(shareW1))
+# func()
+#
+# with tf.variable_scope("scope1"):
+#     w1 = tf.get_variable("w1", shape=[])
+#     w2 = tf.Variable(0.0, name="w2")
+# with tf.variable_scope("scope1", reuse=True):
+#     w1_p = tf.get_variable("w1", shape=[])
+#     w2_p = tf.Variable(1.0, name="w2")
+#
+# print(w1 is w1_p, w2 is w2_p)
+
+# def func():
+#     sw1 = tf.get_variable('sW1')
+#     print(sess.run(sw1))
+#
+#
+# # shareW1 = tf.Variable(tf.truncated_normal([10, 10], stddev=0.1), name='sW1')
+# shareW1 = tf.get_variable('sW1', initializer=tf.truncated_normal([10, 10], stddev=0.1))
+#
+# sess.run(tf.global_variables_initializer())
+# print(sess.run(shareW1))
+# func()
+
+# a = tf.placeholder(tf.float32, name='testa')
+# c = tf.shape(a)
+# d = sess.run(c, feed_dict={'testa:0':[[1, 1, 1],[2, 2, 2]]})
+# print(d[0])
+
+def nn():
+    inputData = tf.placeholder(tf.float32, name='testinput')
+    w = tf.get_variable('W', initializer=tf.constant(2.0, shape=[5, 4]))
+    b = tf.get_variable('B', initializer=tf.constant(0.1, shape=[4]))
+    print(w, b)
+    out = tf.matmul(inputData, w) + b
+    act = tf.nn.sigmoid(out)
+    return act
+
+with tf.variable_scope('1'):
+    a = nn()
+
+with tf.variable_scope('2'):
+    with tf.name_scope('1'):
+        w = tf.get_variable('W', initializer=tf.constant([[-1, -2, -3], [1, 2, -3], [1, 2, -3], [1, 2, 3]], dtype=tf.float32))
+        b = tf.matmul(a, w)
+        #print(w,b)
+        c = tf.nn.softmax_cross_entropy_with_logits(logits=b, labels=[[0, 1, 0], [0, 0, 1]])
+
+sess.run(tf.global_variables_initializer())
+print(sess.run((b, c), feed_dict={'1/testinput:0':np.array([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]])}))
+
+a = np.array([[1,2,3],[4,5,6]])
+b = np.array([[2,3,4,5,6],[5,6,7,8,9]])
+c = np.vstack((a,b[:, [0,2,4]]))
+print(c)

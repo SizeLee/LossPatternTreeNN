@@ -1,6 +1,7 @@
 import json as js
 
-label = 'label'
+labelstr1 = 'label1'
+labelstr2 = 'label2'
 labelname = 'labelname'
 attribute = 'attribute'
 attributename = 'attributename'
@@ -14,7 +15,8 @@ with open('lossPatterns.txt', 'r') as rf:
         with open(fname, 'r') as f:
             pattern = fname.split('.')[0]
             dataDic[pattern] = {}
-            dataDic[pattern][label] = []
+            dataDic[pattern][labelstr1] = []
+            dataDic[pattern][labelstr2] = []
             dataDic[pattern][attribute] = []
             dataDic[pattern][attributename] = []
             dataDic[pattern][labelname] = []
@@ -31,6 +33,7 @@ with open('lossPatterns.txt', 'r') as rf:
                 ###label class
                 label1 = [0 for _ in range(5)]
                 label1[int(attr[0]) - 1] = 1
+                dataDic[pattern][labelstr1].append(label1)
 
                 ###label user
                 label2 = [0 for _ in range(14)]
@@ -39,7 +42,8 @@ with open('lossPatterns.txt', 'r') as rf:
                 else:
                     label2[int(attr[1]) - 1] = 1
 
-                dataDic[pattern][label].append([label1, label2])
+                dataDic[pattern][labelstr2].append(label2)
+
 
                 ###attributes
                 dataDic[pattern][attribute].append(list(map(float, attr[2:])))
