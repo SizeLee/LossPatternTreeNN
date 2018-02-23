@@ -1,6 +1,7 @@
 import json as js
 import numpy as np
 import tensorflow as tf
+import arrangeTrainQueen
 
 def stringcontain(strcontained, str):
     containindex = []
@@ -51,7 +52,7 @@ def parseLossPatternAndBuildNN(losspattern, lptree, sharesizein, label, learning
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=out_layer, labels=label))
         optimizer = tf.train.AdamOptimizer(learning_rate)
         train_step = optimizer.minimize(loss)
-        #todo add accuracy graph node
+        #add accuracy graph node
         correct_prediction = tf.equal(tf.argmax(out_layer, axis=1), tf.argmax(label, axis=1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         lptree[losspattern] = [loss, train_step, accuracy]
@@ -95,7 +96,13 @@ def lptnnmodel(jsondatafilename):
         newdataDic[eachKey]['attr'] = attrarray
         newdataDic[eachKey]['label'] = labelarray
 
-    ##todo judge training round of every loss pattern
+    ##todo seperate origin data into training set and test set
+
+    ##judge training round of every loss pattern, and arrange training turn of every pattern
+    sampleNum = {}
+    for eachKey in sortedpattern:
+        sampleNum[eachKey] = newdataDic[eachKey]['label'].shape[0]
+    trainQueen = arrangeTrainQueen.getTrainqueen(sortedpattern, sampleNum)
 
     with tf.variable_scope('share'):
         shareW1 = tf.get_variable('sW1', initializer=tf.truncated_normal(shareW1shape, stddev=0.1))
@@ -111,22 +118,28 @@ def lptnnmodel(jsondatafilename):
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
-    sortedpattern.sort(reverse=True)
+    # sortedpattern.sort(reverse=True)
     # print(lossPatternTree)
-    i = 0
-    for eachKey in sortedpattern:
+    # i = 0
+    prekey = trainQueen[0][0]
+    for eachKey, trainround in trainQueen:
         # print(newdataDic[eachKey]['label'].shape)
-        #todo according to training round to run sess to train nn
-        for _ in range(1000):
+
+    ######## according to training round to run sess to train nn
+        for _ in range(trainround):
             [loss, train] = sess.run([lossPatternTree[eachKey][0], lossPatternTree[eachKey][1]],
                                     feed_dict={eachKey+'/input:0':newdataDic[eachKey]['attr']})
             # print(loss)
         accuracy = sess.run(lossPatternTree[eachKey][2],
                             feed_dict={eachKey+'/input:0':newdataDic[eachKey]['attr']})
-        print(accuracy)
-        i += 1
-        if i>3:
-            break
+        preaccuracy = sess.run(lossPatternTree[prekey][2],
+                            feed_dict={prekey+'/input:0':newdataDic[prekey]['attr']})
+        print(accuracy, preaccuracy)
+        prekey = eachKey
+
+        # i += 1
+        # if i>3:
+        #     break
 
     return
 

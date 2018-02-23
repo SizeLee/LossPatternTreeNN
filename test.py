@@ -143,29 +143,34 @@ sess = tf.Session()
 # d = sess.run(c, feed_dict={'testa:0':[[1, 1, 1],[2, 2, 2]]})
 # print(d[0])
 
-def nn():
-    inputData = tf.placeholder(tf.float32, name='testinput')
-    w = tf.get_variable('W', initializer=tf.constant(2.0, shape=[5, 4]))
-    b = tf.get_variable('B', initializer=tf.constant(0.1, shape=[4]))
-    print(w, b)
-    out = tf.matmul(inputData, w) + b
-    act = tf.nn.sigmoid(out)
-    return act
+# def nn():
+#     inputData = tf.placeholder(tf.float32, name='testinput')
+#     w = tf.get_variable('W', initializer=tf.constant(2.0, shape=[5, 4]))
+#     b = tf.get_variable('B', initializer=tf.constant(0.1, shape=[4]))
+#     print(w, b)
+#     out = tf.matmul(inputData, w) + b
+#     act = tf.nn.sigmoid(out)
+#     return act
+#
+# with tf.variable_scope('1'):
+#     a = nn()
+#
+# with tf.variable_scope('2'):
+#     with tf.name_scope('1'):
+#         w = tf.get_variable('W', initializer=tf.constant([[-1, -2, -3], [1, 2, -3], [1, 2, -3], [1, 2, 3]], dtype=tf.float32))
+#         b = tf.matmul(a, w)
+#         #print(w,b)
+#         c = tf.nn.softmax_cross_entropy_with_logits(logits=b, labels=[[0, 1, 0], [0, 0, 1]])
+#
+# sess.run(tf.global_variables_initializer())
+# print(sess.run((b, c), feed_dict={'1/testinput:0':np.array([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]])}))
+#
+# a = np.array([[1,2,3],[4,5,6]])
+# b = np.array([[2,3,4,5,6],[5,6,7,8,9]])
+# c = np.vstack((a,b[:, [0,2,4]]))
+# print(c)
 
-with tf.variable_scope('1'):
-    a = nn()
-
-with tf.variable_scope('2'):
-    with tf.name_scope('1'):
-        w = tf.get_variable('W', initializer=tf.constant([[-1, -2, -3], [1, 2, -3], [1, 2, -3], [1, 2, 3]], dtype=tf.float32))
-        b = tf.matmul(a, w)
-        #print(w,b)
-        c = tf.nn.softmax_cross_entropy_with_logits(logits=b, labels=[[0, 1, 0], [0, 0, 1]])
-
-sess.run(tf.global_variables_initializer())
-print(sess.run((b, c), feed_dict={'1/testinput:0':np.array([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]])}))
-
-a = np.array([[1,2,3],[4,5,6]])
-b = np.array([[2,3,4,5,6],[5,6,7,8,9]])
-c = np.vstack((a,b[:, [0,2,4]]))
-print(c)
+tuplequeen = [(1,2), (2,3), (3,4)]
+for a,b in tuplequeen:
+    print(a,b)
+print(tuplequeen*3)
