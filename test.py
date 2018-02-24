@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import random
 
 sess = tf.Session()
 
@@ -170,7 +171,14 @@ sess = tf.Session()
 # c = np.vstack((a,b[:, [0,2,4]]))
 # print(c)
 
-tuplequeen = [(1,2), (2,3), (3,4)]
+tuplequeen = [(1,2), (2,3), (3,4), (4,5), (5,6), (5,6)]
 for a,b in tuplequeen:
     print(a,b)
 print(tuplequeen*3)
+random.seed(1)
+a = [i for i in range(10)]
+random.shuffle(a)
+b = np.random.random_sample((10, 5))
+print(b)
+b = b[a, :]
+print(a,b)

@@ -2,6 +2,7 @@ import json as js
 import numpy as np
 import tensorflow as tf
 import arrangeTrainQueen
+import random
 
 def stringcontain(strcontained, str):
     containindex = []
@@ -28,16 +29,17 @@ def fc_layer(inputtensor, size_in, size_out, name="fc"):
     # tf.summary.histogram("activations", act)
     return act
 
-def parseLossPatternAndBuildNN(losspattern, lptree, sharesizein, label, learning_rate):
+def parseLossPatternAndBuildNN(losspattern, lptree, sharesizein, inputdatadim, labeldim, learning_rate):
     featureNum = int(0)
     for i in losspattern:
         featureNum += int(i)
 
     with tf.variable_scope(losspattern):
-        inputData = tf.placeholder(tf.float32, name='input')
+        inputData = tf.placeholder(tf.float32, name='input', shape=[None, inputdatadim])
         midsize = int((featureNum + sharesizein) * 0.7)
         fc1 = fc_layer(inputData, featureNum, midsize, name='fc1')
         fc2 = fc_layer(fc1, midsize, sharesizein, name='fc2')
+        labels = tf.placeholder(tf.float32, name='labels', shape=[None, labeldim])
 
     with tf.variable_scope('share', reuse=True):
         shareW1 = tf.get_variable('sW1')
@@ -49,11 +51,11 @@ def parseLossPatternAndBuildNN(losspattern, lptree, sharesizein, label, learning
         hidden_layer = tf.matmul(fc2, shareW1) + shareb1
         hidden_layer_act = activationfunc(hidden_layer)
         out_layer = tf.matmul(hidden_layer_act, shareW2) + shareb2
-        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=out_layer, labels=label))
+        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=out_layer, labels=labels))
         optimizer = tf.train.AdamOptimizer(learning_rate)
         train_step = optimizer.minimize(loss)
         #add accuracy graph node
-        correct_prediction = tf.equal(tf.argmax(out_layer, axis=1), tf.argmax(label, axis=1))
+        correct_prediction = tf.equal(tf.argmax(out_layer, axis=1), tf.argmax(labels, axis=1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         lptree[losspattern] = [loss, train_step, accuracy]
         # print(hidden_layer)
@@ -96,7 +98,24 @@ def lptnnmodel(jsondatafilename):
         newdataDic[eachKey]['attr'] = attrarray
         newdataDic[eachKey]['label'] = labelarray
 
-    ##todo seperate origin data into training set and test set
+    ##shuffle samples
+    for eachKey in newdataDic:
+        sampleNumber = newdataDic[eachKey]['label'].shape[0]
+        shuffleindex = [i for i in range(sampleNumber)]
+        random.seed(1)
+        random.shuffle(shuffleindex)
+        newdataDic[eachKey]['attr'] = newdataDic[eachKey]['attr'][shuffleindex, :]
+        newdataDic[eachKey]['label'] = newdataDic[eachKey]['label'][shuffleindex, :]
+        trainPartSampleNum = int(0.8*sampleNumber)
+        newdataDic[eachKey]['traindata'] = {}
+        newdataDic[eachKey]['traindata']['attr'] = newdataDic[eachKey]['attr'][:trainPartSampleNum, :]
+        newdataDic[eachKey]['traindata']['label'] = newdataDic[eachKey]['label'][:trainPartSampleNum, :]
+        newdataDic[eachKey]['testdata'] = {}
+        newdataDic[eachKey]['testdata']['attr'] = newdataDic[eachKey]['attr'][trainPartSampleNum:, :]
+        newdataDic[eachKey]['testdata']['label'] = newdataDic[eachKey]['label'][trainPartSampleNum:, :]
+
+    ###above seperate origin data into training set and test set
+
 
     ##judge training round of every loss pattern, and arrange training turn of every pattern
     sampleNum = {}
@@ -113,7 +132,9 @@ def lptnnmodel(jsondatafilename):
     lossPatternTree = {}
     for eachKey in dataDic:
         # print(eachKey)
-        parseLossPatternAndBuildNN(eachKey, lossPatternTree, sharesizein, newdataDic[eachKey]['label'], learning_rate)
+        parseLossPatternAndBuildNN(eachKey, lossPatternTree, sharesizein,
+                                   newdataDic[eachKey]['traindata']['attr'].shape[1],
+                                   newdataDic[eachKey]['traindata']['label'].shape[1], learning_rate)
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
@@ -128,13 +149,28 @@ def lptnnmodel(jsondatafilename):
     ######## according to training round to run sess to train nn
         for _ in range(trainround):
             [loss, train] = sess.run([lossPatternTree[eachKey][0], lossPatternTree[eachKey][1]],
-                                    feed_dict={eachKey+'/input:0':newdataDic[eachKey]['attr']})
+                                    feed_dict={eachKey+'/input:0':newdataDic[eachKey]['traindata']['attr'],
+                                               eachKey+'/labels:0':newdataDic[eachKey]['traindata']['label']})
             # print(loss)
+        ##train accuracy
         accuracy = sess.run(lossPatternTree[eachKey][2],
-                            feed_dict={eachKey+'/input:0':newdataDic[eachKey]['attr']})
+                            feed_dict={eachKey + '/input:0': newdataDic[eachKey]['traindata']['attr'],
+                                       eachKey + '/labels:0': newdataDic[eachKey]['traindata']['label']})
         preaccuracy = sess.run(lossPatternTree[prekey][2],
-                            feed_dict={prekey+'/input:0':newdataDic[prekey]['attr']})
-        print(accuracy, preaccuracy)
+                            feed_dict={prekey+'/input:0':newdataDic[prekey]['traindata']['attr'],
+                                       prekey+'/labels:0':newdataDic[prekey]['traindata']['label']})
+        print('train:', accuracy, preaccuracy)
+
+        ##test accuracy
+        accuracy = sess.run(lossPatternTree[eachKey][2],
+                            feed_dict={eachKey + '/input:0': newdataDic[eachKey]['testdata']['attr'],
+                                       eachKey + '/labels:0': newdataDic[eachKey]['testdata']['label']})
+        preaccuracy = sess.run(lossPatternTree[prekey][2],
+                               feed_dict={prekey + '/input:0': newdataDic[prekey]['testdata']['attr'],
+                                          prekey + '/labels:0': newdataDic[prekey]['testdata']['label']})
+        print('test:', accuracy, preaccuracy)
+
+
         prekey = eachKey
 
         # i += 1
