@@ -142,7 +142,7 @@ def lptnnmodel(jsondatafilename):
     # sortedpattern.sort(reverse=True)
     # print(lossPatternTree)
     # i = 0
-    prekey = trainQueen[0][0]
+    # prekey = trainQueen[0][0]
     for eachKey, trainround in trainQueen:
         # print(newdataDic[eachKey]['label'].shape)
 
@@ -152,26 +152,43 @@ def lptnnmodel(jsondatafilename):
                                     feed_dict={eachKey+'/input:0':newdataDic[eachKey]['traindata']['attr'],
                                                eachKey+'/labels:0':newdataDic[eachKey]['traindata']['label']})
             # print(loss)
-        ##train accuracy
-        accuracy = sess.run(lossPatternTree[eachKey][2],
-                            feed_dict={eachKey + '/input:0': newdataDic[eachKey]['traindata']['attr'],
-                                       eachKey + '/labels:0': newdataDic[eachKey]['traindata']['label']})
-        preaccuracy = sess.run(lossPatternTree[prekey][2],
-                            feed_dict={prekey+'/input:0':newdataDic[prekey]['traindata']['attr'],
-                                       prekey+'/labels:0':newdataDic[prekey]['traindata']['label']})
-        print('train:', accuracy, preaccuracy)
 
-        ##test accuracy
-        accuracy = sess.run(lossPatternTree[eachKey][2],
-                            feed_dict={eachKey + '/input:0': newdataDic[eachKey]['testdata']['attr'],
-                                       eachKey + '/labels:0': newdataDic[eachKey]['testdata']['label']})
-        preaccuracy = sess.run(lossPatternTree[prekey][2],
-                               feed_dict={prekey + '/input:0': newdataDic[prekey]['testdata']['attr'],
-                                          prekey + '/labels:0': newdataDic[prekey]['testdata']['label']})
-        print('test:', accuracy, preaccuracy)
+        trainaccuracy = []
+        testaccuracy = []
+        for ackey in sortedpattern:
+            accuracy = sess.run(lossPatternTree[ackey][2],
+                                feed_dict={ackey + '/input:0': newdataDic[ackey]['traindata']['attr'],
+                                           ackey + '/labels:0': newdataDic[ackey]['traindata']['label']})
+            trainaccuracy.append(accuracy)
+
+            accuracy = sess.run(lossPatternTree[ackey][2],
+                                feed_dict={ackey + '/input:0': newdataDic[ackey]['testdata']['attr'],
+                                           ackey + '/labels:0': newdataDic[ackey]['testdata']['label']})
+            testaccuracy.append(accuracy)
+
+        print('train:', trainaccuracy)
+        print('test: ', testaccuracy)
+
+        # ##train accuracy
+        # accuracy = sess.run(lossPatternTree[eachKey][2],
+        #                     feed_dict={eachKey + '/input:0': newdataDic[eachKey]['traindata']['attr'],
+        #                                eachKey + '/labels:0': newdataDic[eachKey]['traindata']['label']})
+        # preaccuracy = sess.run(lossPatternTree[prekey][2],
+        #                     feed_dict={prekey+'/input:0':newdataDic[prekey]['traindata']['attr'],
+        #                                prekey+'/labels:0':newdataDic[prekey]['traindata']['label']})
+        # print('train:', accuracy, preaccuracy)
+        #
+        # ##test accuracy
+        # accuracy = sess.run(lossPatternTree[eachKey][2],
+        #                     feed_dict={eachKey + '/input:0': newdataDic[eachKey]['testdata']['attr'],
+        #                                eachKey + '/labels:0': newdataDic[eachKey]['testdata']['label']})
+        # preaccuracy = sess.run(lossPatternTree[prekey][2],
+        #                        feed_dict={prekey + '/input:0': newdataDic[prekey]['testdata']['attr'],
+        #                                   prekey + '/labels:0': newdataDic[prekey]['testdata']['label']})
+        # print('test:', accuracy, preaccuracy)
 
 
-        prekey = eachKey
+        # prekey = eachKey
 
         # i += 1
         # if i>3:
