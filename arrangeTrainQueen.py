@@ -9,7 +9,7 @@ def choosequeenmodel(sortedPattern, sampleNumofPattern, modeltype):
     if modeltype == 0:
         return patternAverageSorted_OneTraversal(sortedPattern, 1000)
     elif modeltype == 1:
-        return patternAverageSorted_SeveralTraversals(sortedPattern, 1000, 500)
+        return patternAverageSorted_SeveralTraversals(sortedPattern, 1000, 10)
     elif modeltype == 2:
         return weighting_by_sample_num(sortedPattern, sampleNumofPattern, 100000)
     elif modeltype == 3:

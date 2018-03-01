@@ -88,11 +88,16 @@ def lptnnmodel(jsondatafilename):
     for eachKey in sortedpattern:
         attrarray = np.array(dataDic[eachKey]['attribute'])
         labelarray = np.array(dataDic[eachKey]['label1'])
-        for prekey in newdataDic:
-            containindex = stringcontain(prekey, eachKey)
-            if containindex:
-                newdataDic[prekey]['attr'] = np.vstack((newdataDic[prekey]['attr'], attrarray[:, containindex]))
-                newdataDic[prekey]['label'] = np.vstack((newdataDic[prekey]['label'], labelarray))
+        ##################it seems mix different losspattern's data is not a good choice,
+        ################## maybe different losspattern's data is collected under different state of sensors.
+        ################## so when mixing, training result is underfiting.
+        ################# Here annotate code below about mixing.
+        # for prekey in newdataDic:
+        #     containindex = stringcontain(prekey, eachKey)
+        #     if containindex:
+        #         newdataDic[prekey]['attr'] = np.vstack((newdataDic[prekey]['attr'], attrarray[:, containindex]))
+        #         newdataDic[prekey]['label'] = np.vstack((newdataDic[prekey]['label'], labelarray))
+        # print(1)
 
         newdataDic[eachKey] = {}
         newdataDic[eachKey]['attr'] = attrarray
