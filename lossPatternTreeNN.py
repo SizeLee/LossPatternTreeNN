@@ -68,7 +68,7 @@ def parseLossPatternAndBuildNN(losspattern, lptree, sharesizein, inputdatadim, l
 
     return
 
-def lptnnmodel(jsondatafilename):
+def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
     sharesizein = 36
     sharesizemid = 20
     sharesizeout = 5
@@ -173,6 +173,7 @@ def lptnnmodel(jsondatafilename):
 
         print('train:', trainaccuracy)
         print('test: ', testaccuracy)
+        # break
 
         # ##train accuracy
         # accuracy = sess.run(lossPatternTree[eachKey][2],
@@ -198,12 +199,35 @@ def lptnnmodel(jsondatafilename):
         # i += 1
         # if i>3:
         #     break
+    print('start competition')
+    for _ in range(competition_trainround):
+        worstkey = sortedpattern[trainaccuracy.index(min(trainaccuracy))]
+        for _i in range(eachroundtimes):
+            [loss, train] = sess.run([lossPatternTree[worstkey][0], lossPatternTree[worstkey][1]],
+                                    feed_dict={worstkey+'/input:0':newdataDic[worstkey]['traindata']['attr'],
+                                               worstkey+'/labels:0':newdataDic[worstkey]['traindata']['label']})
+
+        trainaccuracy = []
+        testaccuracy = []
+        for ackey in sortedpattern:
+            accuracy = sess.run(lossPatternTree[ackey][2],
+                                feed_dict={ackey + '/input:0': newdataDic[ackey]['traindata']['attr'],
+                                           ackey + '/labels:0': newdataDic[ackey]['traindata']['label']})
+            trainaccuracy.append(accuracy)
+
+            accuracy = sess.run(lossPatternTree[ackey][2],
+                                feed_dict={ackey + '/input:0': newdataDic[ackey]['testdata']['attr'],
+                                           ackey + '/labels:0': newdataDic[ackey]['testdata']['label']})
+            testaccuracy.append(accuracy)
+
+        print('train:', trainaccuracy)
+        print('test: ', testaccuracy)
 
     return
 
 
 def main():
-    lptnnmodel('posturedata.json')
+    lptnnmodel('posturedata.json', 50, 1000)
 
 if __name__ == '__main__':
     main()

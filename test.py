@@ -182,3 +182,6 @@ b = np.random.random_sample((10, 5))
 print(b)
 b = b[a, :]
 print(a,b)
+c = [1,2,6,3,8,4,5,3,2]
+i = c.index(max(c))
+print(i)
