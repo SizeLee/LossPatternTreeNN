@@ -222,6 +222,19 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
 
         print('train:', trainaccuracy)
         print('test: ', testaccuracy)
+        # break
+
+    trainaccuracyall = 0.
+    testaccuracyall = 0.
+    weightsum = 0.
+    for i in range(len(sortedpattern)):
+        weightsum += sampleNum[sortedpattern[i]]
+        trainaccuracyall += trainaccuracy[i] * sampleNum[sortedpattern[i]]
+        testaccuracyall += testaccuracy[i] * sampleNum[sortedpattern[i]]
+    trainaccuracyall /= weightsum
+    testaccuracyall /= weightsum
+    print('train accuracy on all:', trainaccuracyall)
+    print('test accuracy on all:', testaccuracyall)
 
     return
 
