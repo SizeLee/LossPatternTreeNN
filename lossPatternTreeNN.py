@@ -16,7 +16,7 @@ def stringcontain(strcontained, str):
     return containindex
 
 def activationfunc(x):
-    return tf.nn.sigmoid(x)
+    return tf.nn.leaky_relu(x)
 
 def fc_layer(inputtensor, size_in, size_out, name="fc"):
   with tf.variable_scope(name):
