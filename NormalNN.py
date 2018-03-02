@@ -2,7 +2,7 @@ import json as js
 import numpy as np
 import tensorflow as tf
 import arrangeTrainQueen
-import random
+import random,time
 
 
 def stringcontain(strcontained, str):
@@ -130,6 +130,7 @@ def lptnnmodel(jsondatafilename, train_round):
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         nnResult = [loss, train_step, accuracy]
 
+    starttime = time.time()
 
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
@@ -140,29 +141,35 @@ def lptnnmodel(jsondatafilename, train_round):
 
 
     ######## according to training round to run sess to train nn
-    for _ in range(train_round):
+    for _i in range(train_round):
         [loss, train] = sess.run([nnResult[0], nnResult[1]],
                                  feed_dict={netName + '/input:0': newdataDic['traindata']['attr'],
                                             netName + '/labels:0': newdataDic['traindata']['label']})
-        print(loss)
+        # print(loss)
+        ##every 1k round output a test accuracy
+        if _i%1000 == 0:
+            trainaccuracy = sess.run(nnResult[2],
+                                     feed_dict={netName + '/input:0': newdataDic['traindata']['attr'],
+                                                netName + '/labels:0': newdataDic['traindata']['label']})
 
-    trainaccuracy = sess.run(nnResult[2],
-                        feed_dict={netName + '/input:0': newdataDic['traindata']['attr'],
-                                   netName + '/labels:0': newdataDic['traindata']['label']})
+            testaccuracy = sess.run(nnResult[2],
+                                    feed_dict={netName + '/input:0': newdataDic['testdata']['attr'],
+                                               netName + '/labels:0': newdataDic['testdata']['label']})
 
-    testaccuracy = sess.run(nnResult[2],
-                        feed_dict={netName + '/input:0': newdataDic['testdata']['attr'],
-                                   netName + '/labels:0': newdataDic['testdata']['label']})
+            print('train:', trainaccuracy)
+            print('test: ', testaccuracy)
 
-    print('train:', trainaccuracy)
-    print('test: ', testaccuracy)
+
     # break
+    endtime = time.time()
+    timecost = endtime - starttime
+    print('time cost:', timecost)
 
     return
 
 
 def main():
-    lptnnmodel('posturedata.json', 50000)
+    lptnnmodel('posturedata.json', 10000)
 
 
 if __name__ == '__main__':

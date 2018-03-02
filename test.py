@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-import random
+import random, time
 
 sess = tf.Session()
 
@@ -166,6 +166,7 @@ sess = tf.Session()
 # sess.run(tf.global_variables_initializer())
 # print(sess.run((b, c), feed_dict={'1/testinput:0':np.array([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]])}))
 #
+s = time.time()
 a = np.array([[1,2,3],[4,5,6]])
 b = np.array([[2,3,4,5,6],[5,6,7,8,9]])
 c = np.vstack((a,b[:, [0,2,4]]))
@@ -194,6 +195,9 @@ print(d, e)
 # print(b)
 # b = b[a, :]
 # print(a,b)
-# c = [1,2,6,3,8,4,5,3,2]
-# i = c.index(max(c))
-# print(i)
+c = [1,2,6,8,3,8,8,4,5,3,2]
+i = c.index(max(c))
+print(i)
+
+e = time.time()
+print(e - s)

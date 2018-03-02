@@ -2,7 +2,7 @@ import json as js
 import numpy as np
 import tensorflow as tf
 import arrangeTrainQueen
-import random
+import random, time
 
 def stringcontain(strcontained, str):
     containindex = []
@@ -141,6 +141,9 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
                                    newdataDic[eachKey]['traindata']['attr'].shape[1],
                                    newdataDic[eachKey]['traindata']['label'].shape[1], learning_rate)
 
+
+    starttime = time.time()
+
     sess = tf.Session()
     sess.run(tf.global_variables_initializer())
 
@@ -173,7 +176,8 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
 
         print('train:', trainaccuracy)
         print('test: ', testaccuracy)
-        # break
+        print('only competition')
+        break
 
         # ##train accuracy
         # accuracy = sess.run(lossPatternTree[eachKey][2],
@@ -199,7 +203,7 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
         # i += 1
         # if i>3:
         #     break
-    print('start competition')
+    # print('start competition')
     for _ in range(competition_trainround):
         worstkey = sortedpattern[trainaccuracy.index(min(trainaccuracy))]
         for _i in range(eachroundtimes):
@@ -224,6 +228,9 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
         print('test: ', testaccuracy)
         # break
 
+    endtime = time.time()
+    timecost = endtime - starttime
+
     trainaccuracyall = 0.
     testaccuracyall = 0.
     weightsum = 0.
@@ -235,12 +242,13 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
     testaccuracyall /= weightsum
     print('train accuracy on all:', trainaccuracyall)
     print('test accuracy on all:', testaccuracyall)
+    print('time cost:', timecost)
 
     return
 
 
 def main():
-    lptnnmodel('posturedata.json', 50, 1000)
+    lptnnmodel('posturedata.json', 500, 20)
 
 if __name__ == '__main__':
     main()
