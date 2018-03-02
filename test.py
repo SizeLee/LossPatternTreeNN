@@ -166,22 +166,34 @@ sess = tf.Session()
 # sess.run(tf.global_variables_initializer())
 # print(sess.run((b, c), feed_dict={'1/testinput:0':np.array([[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]])}))
 #
-# a = np.array([[1,2,3],[4,5,6]])
-# b = np.array([[2,3,4,5,6],[5,6,7,8,9]])
-# c = np.vstack((a,b[:, [0,2,4]]))
-# print(c)
+a = np.array([[1,2,3],[4,5,6]])
+b = np.array([[2,3,4,5,6],[5,6,7,8,9]])
+c = np.vstack((a,b[:, [0,2,4]]))
+print(c)
+ave = np.array([])
+c = np.hstack((a,np.ones((2, 0)) * ave))
+print(c)
+ave = np.empty((0, 3))
+a = np.ones((4,3))
+v = np.vstack((ave, a))
+print(v)
+a = a[:, :-2]
+print(a)
 
-tuplequeen = [(1,2), (2,3), (3,4), (4,5), (5,6), (5,6)]
-for a,b in tuplequeen:
-    print(a,b)
-print(tuplequeen*3)
-random.seed(1)
-a = [i for i in range(10)]
-random.shuffle(a)
-b = np.random.random_sample((10, 5))
-print(b)
-b = b[a, :]
-print(a,b)
-c = [1,2,6,3,8,4,5,3,2]
-i = c.index(max(c))
-print(i)
+d = [1,2,3]
+e = d.reverse()
+print(d, e)
+# tuplequeen = [(1,2), (2,3), (3,4), (4,5), (5,6), (5,6)]
+# for a,b in tuplequeen:
+#     print(a,b)
+# print(tuplequeen*3)
+# random.seed(1)
+# a = [i for i in range(10)]
+# random.shuffle(a)
+# b = np.random.random_sample((10, 5))
+# print(b)
+# b = b[a, :]
+# print(a,b)
+# c = [1,2,6,3,8,4,5,3,2]
+# i = c.index(max(c))
+# print(i)
