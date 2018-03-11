@@ -18,18 +18,22 @@ def stringcontain(strcontained, str):
 def activationfunc(x):
     return tf.nn.leaky_relu(x)
 
+def weight_loss(w):
+    return tf.nn.l2_loss(w)
+
 def fc_layer(inputtensor, size_in, size_out, name="fc"):
   with tf.variable_scope(name):
     w = tf.get_variable('W', initializer=tf.truncated_normal([size_in, size_out], stddev=0.1))
     b = tf.get_variable('B', initializer=tf.constant(0.1, shape=[size_out]))
     out = tf.matmul(inputtensor, w) + b
     act = activationfunc(out)
+    reg = weight_loss(w) + weight_loss(b)
     # tf.summary.histogram("weights", w)
     # tf.summary.histogram("biases", b)
     # tf.summary.histogram("activations", act)
-    return act
+    return act, reg
 
-def parseLossPatternAndBuildNN(losspattern, lptree, sharesizein, inputdatadim, labeldim, learning_rate):
+def parseLossPatternAndBuildNN(losspattern, lptree, sharesizein, inputdatadim, labeldim, learning_rate, regularization):
     featureNum = int(0)
     for i in losspattern:
         featureNum += int(i)
@@ -37,8 +41,8 @@ def parseLossPatternAndBuildNN(losspattern, lptree, sharesizein, inputdatadim, l
     with tf.variable_scope(losspattern):
         inputData = tf.placeholder(tf.float32, name='input', shape=[None, inputdatadim])
         midsize = int((featureNum + sharesizein) * 0.7)
-        fc1 = fc_layer(inputData, featureNum, midsize, name='fc1')
-        fc2 = fc_layer(fc1, midsize, sharesizein, name='fc2')
+        fc1, regfc1 = fc_layer(inputData, featureNum, midsize, name='fc1')
+        fc2, regfc2 = fc_layer(fc1, midsize, sharesizein, name='fc2')
         labels = tf.placeholder(tf.float32, name='labels', shape=[None, labeldim])
 
     with tf.variable_scope('share', reuse=True):
@@ -51,7 +55,9 @@ def parseLossPatternAndBuildNN(losspattern, lptree, sharesizein, inputdatadim, l
         hidden_layer = tf.matmul(fc2, shareW1) + shareb1
         hidden_layer_act = activationfunc(hidden_layer)
         out_layer = tf.matmul(hidden_layer_act, shareW2) + shareb2
-        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=out_layer, labels=labels))
+        regshare = weight_loss(shareW1) + weight_loss(shareW2) + weight_loss(shareb1) + weight_loss(shareb2)
+        reg = regfc1 + regfc2 + regshare
+        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=out_layer, labels=labels)) + regularization * reg
         optimizer = tf.train.AdamOptimizer(learning_rate)
         train_step = optimizer.minimize(loss)
         #add accuracy graph node
@@ -75,6 +81,7 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
     shareW1shape = [sharesizein, sharesizemid]
     shareW2shape = [sharesizemid, sharesizeout]
     learning_rate = 0.001
+    regularization = 1e-4
 
     with open(jsondatafilename, 'r') as f:
         dataDic = js.load(f)
@@ -139,7 +146,7 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
         # print(eachKey)
         parseLossPatternAndBuildNN(eachKey, lossPatternTree, sharesizein,
                                    newdataDic[eachKey]['traindata']['attr'].shape[1],
-                                   newdataDic[eachKey]['traindata']['label'].shape[1], learning_rate)
+                                   newdataDic[eachKey]['traindata']['label'].shape[1], learning_rate, regularization)
 
 
     starttime = time.time()

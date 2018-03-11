@@ -28,10 +28,11 @@ def fc_layer(inputtensor, size_in, size_out, name="fc"):
         b = tf.get_variable('B', initializer=tf.constant(0.1, shape=[size_out]))
         out = tf.matmul(inputtensor, w) + b
         act = activationfunc(out)
+        reg = tf.nn.l2_loss(w) + tf.nn.l2_loss(b)
         # tf.summary.histogram("weights", w)
         # tf.summary.histogram("biases", b)
         # tf.summary.histogram("activations", act)
-        return act
+        return act, reg
 
 
 def lptnnmodel(jsondatafilename, train_round):
@@ -110,8 +111,8 @@ def lptnnmodel(jsondatafilename, train_round):
     with tf.variable_scope(netName):
         inputData = tf.placeholder(tf.float32, name='input', shape=[None, sharesizein])
         midsize = int((2 * sharesizein) * 0.7)
-        fc1 = fc_layer(inputData, sharesizein, midsize, name='fc1')
-        fc2 = fc_layer(fc1, midsize, sharesizein, name='fc2')
+        fc1, reg1 = fc_layer(inputData, sharesizein, midsize, name='fc1')
+        fc2, reg2 = fc_layer(fc1, midsize, sharesizein, name='fc2')
         labels = tf.placeholder(tf.float32, name='labels', shape=[None, newdataDic['label'].shape[1]])
 
         shareW1 = tf.get_variable('sW1', initializer=tf.truncated_normal(shareW1shape, stddev=0.1))
@@ -122,7 +123,8 @@ def lptnnmodel(jsondatafilename, train_round):
         hidden_layer = tf.matmul(fc2, shareW1) + shareb1
         hidden_layer_act = activationfunc(hidden_layer)
         out_layer = tf.matmul(hidden_layer_act, shareW2) + shareb2
-        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=out_layer, labels=labels))
+        reg = tf.nn.l2_loss(shareW1) + tf.nn.l2_loss(shareW2) + tf.nn.l2_loss(shareb1) + tf.nn.l2_loss(shareb2) + reg1 + reg2
+        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=out_layer, labels=labels)) + 1e-4 * reg
         optimizer = tf.train.AdamOptimizer(learning_rate)
         train_step = optimizer.minimize(loss)
         # add accuracy graph node
