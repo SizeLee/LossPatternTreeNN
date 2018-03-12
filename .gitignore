@@ -1,6 +1,8 @@
 # python file compile cache
 /.idea/
 /__pycache__/
+/venv/
+/.vscode/
 
 # data file 
 *.csv
