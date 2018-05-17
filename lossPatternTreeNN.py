@@ -234,13 +234,13 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
                                     feed_dict={worstkey+'/input:0':newdataDic[worstkey]['traindata']['attr'],
                                                worstkey+'/labels:0':newdataDic[worstkey]['traindata']['label']})
 
-        run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-        run_metadata = tf.RunMetadata()
+        # run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+        # run_metadata = tf.RunMetadata()
         tfsummary = sess.run(merged, feed_dict=feedall(sortedpattern, newdataDic, 'traindata'))
-        train_writer.add_run_metadata(run_metadata, 'step%05d' %(_j+1)*eachroundtimes)
+        # train_writer.add_run_metadata(run_metadata, 'step%05d' %(_j+1)*eachroundtimes)
         train_writer.add_summary(tfsummary, (_j+1)*eachroundtimes)
         tfsummary = sess.run(merged, feed_dict=feedall(sortedpattern, newdataDic, 'testdata'))
-        test_writer.add_summary(tfsummary)
+        test_writer.add_summary(tfsummary, (_j+1)*eachroundtimes)
 
         trainaccuracy = []
         testaccuracy = []
