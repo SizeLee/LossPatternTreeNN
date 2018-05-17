@@ -58,11 +58,13 @@ def parseLossPatternAndBuildNN(losspattern, lptree, sharesizein, inputdatadim, l
         regshare = weight_loss(shareW1) + weight_loss(shareW2) + weight_loss(shareb1) + weight_loss(shareb2)
         reg = regfc1 + regfc2 + regshare
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=out_layer, labels=labels)) + regularization * reg
+        tf.summary.scalar(losspattern+'_loss', loss)
         optimizer = tf.train.AdamOptimizer(learning_rate)
         train_step = optimizer.minimize(loss)
         #add accuracy graph node
         correct_prediction = tf.equal(tf.argmax(out_layer, axis=1), tf.argmax(labels, axis=1))
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+        tf.summary.scalar(losspattern+'_accuracy', accuracy)
         lptree[losspattern] = [loss, train_step, accuracy]
         # print(hidden_layer)
         # print(hidden_layer_act)
@@ -82,6 +84,7 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
     shareW2shape = [sharesizemid, sharesizeout]
     learning_rate = 0.001
     regularization = 1e-4
+    log_dir = 'tflog'
 
     with open(jsondatafilename, 'r') as f:
         dataDic = js.load(f)
@@ -148,10 +151,22 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
                                    newdataDic[eachKey]['traindata']['attr'].shape[1],
                                    newdataDic[eachKey]['traindata']['label'].shape[1], learning_rate, regularization)
 
+    with tf.variable_scope('total'):
+        totalaccuracy = lossPatternTree[sortedpattern[0]][2] * sampleNum[sortedpattern[0]]
+        weightsum = sampleNum[sortedpattern[0]]
+        for i in range(1, len(sortedpattern)):
+            weightsum += sampleNum[sortedpattern[i]]
+            totalaccuracy += lossPatternTree[sortedpattern[i]][2] * sampleNum[sortedpattern[i]] 
+        totalaccuracy /= weightsum
+        tf.summary.scalar('total_accuracy', totalaccuracy)
+
+    merged = tf.summary.merge_all()
 
     starttime = time.time()
-
     sess = tf.Session()
+
+    train_writer = tf.summary.FileWriter(log_dir + '/train', sess.graph)
+    test_writer = tf.summary.FileWriter(log_dir + '/test')
     sess.run(tf.global_variables_initializer())
 
     # sortedpattern.sort(reverse=True)
@@ -162,10 +177,11 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
         # print(newdataDic[eachKey]['label'].shape)
 
     ######## according to training round to run sess to train nn
-        for _ in range(trainround):
+        for i in range(trainround):
             [loss, train] = sess.run([lossPatternTree[eachKey][0], lossPatternTree[eachKey][1]],
                                     feed_dict={eachKey+'/input:0':newdataDic[eachKey]['traindata']['attr'],
                                                eachKey+'/labels:0':newdataDic[eachKey]['traindata']['label']})
+
             # print(loss)
 
         trainaccuracy = []
@@ -211,12 +227,20 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
         # if i>3:
         #     break
     # print('start competition')
-    for _ in range(competition_trainround):
+    for _j in range(competition_trainround):
         worstkey = sortedpattern[trainaccuracy.index(min(trainaccuracy))]
         for _i in range(eachroundtimes):
             [loss, train] = sess.run([lossPatternTree[worstkey][0], lossPatternTree[worstkey][1]],
                                     feed_dict={worstkey+'/input:0':newdataDic[worstkey]['traindata']['attr'],
                                                worstkey+'/labels:0':newdataDic[worstkey]['traindata']['label']})
+
+        run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+        run_metadata = tf.RunMetadata()
+        tfsummary = sess.run(merged, feed_dict=feedall(sortedpattern, newdataDic, 'traindata'))
+        train_writer.add_run_metadata(run_metadata, 'step%05d' %(_j+1)*eachroundtimes)
+        train_writer.add_summary(tfsummary, (_j+1)*eachroundtimes)
+        tfsummary = sess.run(merged, feed_dict=feedall(sortedpattern, newdataDic, 'testdata'))
+        test_writer.add_summary(tfsummary)
 
         trainaccuracy = []
         testaccuracy = []
@@ -253,6 +277,12 @@ def lptnnmodel(jsondatafilename, competition_trainround, eachroundtimes):
 
     return
 
+def feedall(sortedpattern, newdataDic, datasetStr):
+    feeddic = {}
+    for each in sortedpattern:
+        feeddic[each + '/input:0'] = newdataDic[each][datasetStr]['attr']
+        feeddic[each + '/labels:0'] = newdataDic[each][datasetStr]['label']
+    return feeddic
 
 def main():
     lptnnmodel('posturedata.json', 500, 20)
